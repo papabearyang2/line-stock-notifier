@@ -41,23 +41,26 @@ def get_user_stock_key(user_id: str):
     return f"user:{user_id}:stocks"
 
 def shorten_url(url: str):
-    """Shorten URL using Is.gd API with proper encoding."""
+    """
+    Shorten URL using CleanURI API (more modern and reliable).
+    Falls back to original URL on any error to ensure message delivery.
+    """
     try:
-        # Crucial: Encode the URL to handle special characters
-        encoded_url = quote(url)
-        api_url = f"https://is.gd/create.php?format=simple&url={encoded_url}"
-        response = requests.get(api_url, timeout=5)
-        result = response.text.strip()
+        # CleanURI expects a POST request with the URL
+        api_url = "https://cleanuri.com/api/v1/shorten"
+        response = requests.post(api_url, data={"url": url}, timeout=5)
         
-        # Check if the result is actually a URL
-        if response.status_code == 200 and result.startswith("http"):
-            return result
-        else:
-            logger.warning(f"Is.gd shortening failed for {url}. Message: {result}")
+        if response.status_code == 200:
+            result_json = response.json()
+            short_url = result_json.get("result_url")
+            if short_url and short_url.startswith("http"):
+                return short_url
+        
+        logger.warning(f"CleanURI shortening failed for {url}. Status: {response.status_code}")
     except Exception as e:
         logger.error(f"URL shortening request failed: {e}")
     
-    return url  # Fallback to original URL if anything goes wrong
+    return url  # Fallback to original URL
 
 def fetch_stock_news(stock_id: str):
     """Fetch news from Google News RSS for a given stock ID, filtered by last 3 days."""
