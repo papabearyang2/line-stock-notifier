@@ -40,14 +40,14 @@ def get_user_stock_key(user_id: str):
     return f"user:{user_id}:stocks"
 
 def shorten_url(url: str):
-    """Shorten URL using TinyURL API."""
+    """Shorten URL using Is.gd API (more modern and safer than legacy TinyURL)."""
     try:
-        api_url = f"http://tinyurl.com/api-create.php?url={url}"
+        api_url = f"https://is.gd/create.php?format=simple&url={url}"
         response = requests.get(api_url, timeout=5)
         if response.status_code == 200:
-            return response.text
+            return response.text.strip()
     except Exception as e:
-        print(f"URL shortening failed: {e}")
+        logger.error(f"URL shortening failed: {e}")
     return url  # Fallback to original URL if failed
 
 def fetch_stock_news(stock_id: str):
