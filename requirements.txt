@@ -4,5 +4,4 @@ line-bot-sdk
 feedparser
 requests
 python-dotenv
-upstash-redis
 redis

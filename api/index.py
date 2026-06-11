@@ -7,8 +7,7 @@ from fastapi import FastAPI, Request, HTTPException, BackgroundTasks
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, TextMessage, TextSendMessage
-from upstash_redis import Redis as UpstashRedis
-import redis as local_redis
+import redis
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -23,20 +22,18 @@ app = FastAPI()
 LINE_CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
 LINE_CHANNEL_SECRET = os.getenv("LINE_CHANNEL_SECRET")
 LINE_USER_ID = os.getenv("LINE_USER_ID")
-KV_URL = os.getenv("KV_REST_API_URL")
-KV_TOKEN = os.getenv("KV_REST_API_TOKEN")
+REDIS_URL = os.getenv("REDIS_URL") or "redis://redis:6379"
 
 line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(LINE_CHANNEL_SECRET)
 
-# Determine which Redis client to use
-if KV_URL and KV_URL.startswith("http"):
-    # Upstash Redis (HTTP) for Vercel
-    redis = UpstashRedis(url=KV_URL, token=KV_TOKEN)
-else:
-    # Standard Redis (TCP) for Local
-    # Expected KV_URL format for local: redis://redis:6379
-    redis = local_redis.from_url(KV_URL or "redis://redis:6379", decode_responses=True)
+# Initialize standard Redis client (TCP/TLS)
+try:
+    logger.info(f"Connecting to Redis: {REDIS_URL.split('@')[-1]}")
+    redis = redis.from_url(REDIS_URL, decode_responses=True)
+except Exception as e:
+    logger.error(f"Failed to connect to Redis: {e}")
+    redis = None
 
 def get_user_stock_key(user_id: str):
     return f"user:{user_id}:stocks"
