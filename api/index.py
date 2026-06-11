@@ -56,7 +56,8 @@ def fetch_stock_news(stock_id: str):
     news_items = []
     for entry in feed.entries[:3]:  # Get top 3 news
         short_link = shorten_url(entry.link)
-        news_items.append(f"📌 {entry.title}\n🔗 {short_link}")
+        # entry.published is usually in format: Thu, 11 Jun 2026 08:30:00 GMT
+        news_items.append(f"📌 {entry.title}\n⏰ {entry.published}\n🔗 {short_link}")
     return news_items
 
 @app.get("/")
@@ -119,7 +120,10 @@ def handle_message(event):
             else:
                 reply = "🔍 正在為您查詢最新新聞摘要...\n"
                 full_news_content = ""
-                for stock in stocks:
+                for i, stock in enumerate(stocks):
+                    if i > 0:
+                        full_news_content += "\n" + "─" * 15 + "\n"
+                    
                     news = fetch_stock_news(stock)
                     if news:
                         full_news_content += f"\n📈 【{stock}】\n" + "\n\n".join(news) + "\n"
