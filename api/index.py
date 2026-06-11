@@ -3,6 +3,7 @@ import re
 import requests
 import feedparser
 import logging
+from datetime import datetime, timedelta, timezone
 from fastapi import FastAPI, Request, HTTPException, BackgroundTasks
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
@@ -50,14 +51,39 @@ def shorten_url(url: str):
     return url  # Fallback to original URL if failed
 
 def fetch_stock_news(stock_id: str):
-    """Fetch news from Google News RSS for a given stock ID."""
+    """Fetch news from Google News RSS for a given stock ID, filtered by last 3 days."""
     url = f"https://news.google.com/rss/search?q={stock_id}+stock&hl=zh-TW&gl=TW&ceid=TW:zh-Hant"
     feed = feedparser.parse(url)
     news_items = []
-    for entry in feed.entries[:3]:  # Get top 3 news
-        short_link = shorten_url(entry.link)
-        # entry.published is usually in format: Thu, 11 Jun 2026 08:30:00 GMT
-        news_items.append(f"📌 {entry.title}\n⏰ {entry.published}\n🔗 {short_link}")
+    
+    # Time settings
+    now_utc = datetime.now(timezone.utc)
+    three_days_ago = now_utc - timedelta(days=3)
+    tw_tz = timezone(timedelta(hours=8))  # Taiwan Time GMT+8
+
+    for entry in feed.entries:
+        try:
+            # Parse publication date to UTC datetime
+            # published_parsed is a time.struct_time in UTC
+            dt_utc = datetime(*entry.published_parsed[:6], tzinfo=timezone.utc)
+            
+            # Filter: only last 3 days
+            if dt_utc < three_days_ago:
+                continue
+                
+            # Convert to Taiwan time for display
+            dt_tw = dt_utc.astimezone(tw_tz)
+            formatted_time = dt_tw.strftime("%Y/%m/%d %H:%M")
+            
+            short_link = shorten_url(entry.link)
+            news_items.append(f"📌 {entry.title}\n⏰ {formatted_time} (台)\n🔗 {short_link}")
+            
+            if len(news_items) >= 3:  # Limit to 3 news per stock
+                break
+        except Exception as e:
+            logger.error(f"Error parsing news entry: {e}")
+            continue
+            
     return news_items
 
 @app.get("/")
