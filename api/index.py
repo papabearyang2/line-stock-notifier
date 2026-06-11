@@ -1,11 +1,13 @@
 import os
 import re
+import requests
 import feedparser
 from fastapi import FastAPI, Request, HTTPException, BackgroundTasks
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, TextMessage, TextSendMessage
-from upstash_redis import Redis
+from upstash_redis import Redis as UpstashRedis
+import redis as local_redis
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -21,10 +23,29 @@ KV_TOKEN = os.getenv("KV_REST_API_TOKEN")
 
 line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(LINE_CHANNEL_SECRET)
-redis = Redis(url=KV_URL, token=KV_TOKEN)
+
+# Determine which Redis client to use
+if KV_URL and KV_URL.startswith("http"):
+    # Upstash Redis (HTTP) for Vercel
+    redis = UpstashRedis(url=KV_URL, token=KV_TOKEN)
+else:
+    # Standard Redis (TCP) for Local
+    # Expected KV_URL format for local: redis://redis:6379
+    redis = local_redis.from_url(KV_URL or "redis://redis:6379", decode_responses=True)
 
 def get_user_stock_key(user_id: str):
     return f"user:{user_id}:stocks"
+
+def shorten_url(url: str):
+    """Shorten URL using TinyURL API."""
+    try:
+        api_url = f"http://tinyurl.com/api-create.php?url={url}"
+        response = requests.get(api_url, timeout=5)
+        if response.status_code == 200:
+            return response.text
+    except Exception as e:
+        print(f"URL shortening failed: {e}")
+    return url  # Fallback to original URL if failed
 
 def fetch_stock_news(stock_id: str):
     """Fetch news from Google News RSS for a given stock ID."""
@@ -32,7 +53,8 @@ def fetch_stock_news(stock_id: str):
     feed = feedparser.parse(url)
     news_items = []
     for entry in feed.entries[:3]:  # Get top 3 news
-        news_items.append(f"📌 {entry.title}\n🔗 {entry.link}")
+        short_link = shorten_url(entry.link)
+        news_items.append(f"📌 {entry.title}\n🔗 {short_link}")
     return news_items
 
 @app.get("/")
@@ -75,6 +97,24 @@ def handle_message(event):
             reply = "📊 您的目前持股清單：\n" + "\n".join(stocks)
         else:
             reply = "目前清單中沒有持股。"
+    elif text == "新聞":
+        stocks = redis.smembers(key)
+        if not stocks:
+            reply = "目前清單中沒有持股，請先新增持股（例如：新增 2330）。"
+        else:
+            # Reuse the notification logic but as a reply
+            reply = "🔍 正在為您查詢最新新聞摘要...\n"
+            full_news_content = ""
+            for stock in stocks:
+                news = fetch_stock_news(stock)
+                if news:
+                    full_news_content += f"\n📈 【{stock}】\n" + "\n\n".join(news) + "\n"
+                else:
+                    full_news_content += f"\n📈 【{stock}】\n暫無最新相關新聞。\n"
+            
+            if len(full_news_content) > 4900:
+                full_news_content = full_news_content[:4897] + "..."
+            reply = full_news_content
     else:
         # Ignore other messages or provide help
         return
