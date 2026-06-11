@@ -4,6 +4,7 @@ import requests
 import feedparser
 import logging
 from datetime import datetime, timedelta, timezone
+from urllib.parse import quote
 from fastapi import FastAPI, Request, HTTPException, BackgroundTasks
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
@@ -40,15 +41,23 @@ def get_user_stock_key(user_id: str):
     return f"user:{user_id}:stocks"
 
 def shorten_url(url: str):
-    """Shorten URL using Is.gd API (more modern and safer than legacy TinyURL)."""
+    """Shorten URL using Is.gd API with proper encoding."""
     try:
-        api_url = f"https://is.gd/create.php?format=simple&url={url}"
+        # Crucial: Encode the URL to handle special characters
+        encoded_url = quote(url)
+        api_url = f"https://is.gd/create.php?format=simple&url={encoded_url}"
         response = requests.get(api_url, timeout=5)
-        if response.status_code == 200:
-            return response.text.strip()
+        result = response.text.strip()
+        
+        # Check if the result is actually a URL
+        if response.status_code == 200 and result.startswith("http"):
+            return result
+        else:
+            logger.warning(f"Is.gd shortening failed for {url}. Message: {result}")
     except Exception as e:
-        logger.error(f"URL shortening failed: {e}")
-    return url  # Fallback to original URL if failed
+        logger.error(f"URL shortening request failed: {e}")
+    
+    return url  # Fallback to original URL if anything goes wrong
 
 def fetch_stock_news(stock_id: str):
     """Fetch news from Google News RSS for a given stock ID, filtered by last 3 days."""
