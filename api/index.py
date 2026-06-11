@@ -2,6 +2,7 @@ import os
 import re
 import requests
 import feedparser
+import logging
 from fastapi import FastAPI, Request, HTTPException, BackgroundTasks
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
@@ -11,6 +12,10 @@ import redis as local_redis
 from dotenv import load_dotenv
 
 load_dotenv()
+
+# Setup logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
@@ -65,64 +70,77 @@ async def root():
 async def webhook(request: Request):
     signature = request.headers.get("X-Line-Signature")
     body = await request.body()
+    body_str = body.decode("utf-8")
+    
+    # Log the incoming request for debugging
+    logger.info(f"Incoming Webhook Body: {body_str}")
+    logger.info(f"Signature: {signature}")
+    
     try:
-        handler.handle(body.decode("utf-8"), signature)
+        handler.handle(body_str, signature)
     except InvalidSignatureError:
+        logger.error("Invalid Signature Error")
         raise HTTPException(status_code=400, detail="Invalid signature")
+    except Exception as e:
+        logger.error(f"Webhook Error: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
     return "OK"
 
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
-    text = event.message.text.strip()
-    user_id = event.source.user_id
-    key = get_user_stock_key(user_id)
+    try:
+        text = event.message.text.strip()
+        user_id = event.source.user_id
+        key = get_user_stock_key(user_id)
+        
+        logger.info(f"Handling message from {user_id}: {text}")
 
-    if text.startswith("新增") or text.startswith("+"):
-        stock_id = re.sub(r"^(新增|\+)\s*", "", text)
-        if stock_id:
-            redis.sadd(key, stock_id)
-            reply = f"✅ 已新增持股：{stock_id}"
+        if text.startswith("新增") or text.startswith("+"):
+            stock_id = re.sub(r"^(新增|\+)\s*", "", text)
+            if stock_id:
+                redis.sadd(key, stock_id)
+                reply = f"✅ 已新增持股：{stock_id}"
+            else:
+                reply = "請輸入正確格式，例如：新增 2330"
+        elif text.startswith("刪除") or text.startswith("-"):
+            stock_id = re.sub(r"^(刪除|\-)\s*", "", text)
+            if stock_id:
+                redis.srem(key, stock_id)
+                reply = f"❌ 已刪除持股：{stock_id}"
+            else:
+                reply = "請輸入正確格式，例如：刪除 2330"
+        elif text in ["清單", "我的持股", "查詢"]:
+            stocks = redis.smembers(key)
+            if stocks:
+                reply = "📊 您的目前持股清單：\n" + "\n".join(stocks)
+            else:
+                reply = "目前清單中沒有持股。"
+        elif text == "新聞":
+            stocks = redis.smembers(key)
+            if not stocks:
+                reply = "目前清單中沒有持股，請先新增持股（例如：新增 2330）。"
+            else:
+                reply = "🔍 正在為您查詢最新新聞摘要...\n"
+                full_news_content = ""
+                for stock in stocks:
+                    news = fetch_stock_news(stock)
+                    if news:
+                        full_news_content += f"\n📈 【{stock}】\n" + "\n\n".join(news) + "\n"
+                    else:
+                        full_news_content += f"\n📈 【{stock}】\n暫無最新相關新聞。\n"
+                
+                if len(full_news_content) > 4900:
+                    full_news_content = full_news_content[:4897] + "..."
+                reply = full_news_content
         else:
-            reply = "請輸入正確格式，例如：新增 2330"
-    elif text.startswith("刪除") or text.startswith("-"):
-        stock_id = re.sub(r"^(刪除|\-)\s*", "", text)
-        if stock_id:
-            redis.srem(key, stock_id)
-            reply = f"❌ 已刪除持股：{stock_id}"
-        else:
-            reply = "請輸入正確格式，例如：刪除 2330"
-    elif text in ["清單", "我的持股", "查詢"]:
-        stocks = redis.smembers(key)
-        if stocks:
-            reply = "📊 您的目前持股清單：\n" + "\n".join(stocks)
-        else:
-            reply = "目前清單中沒有持股。"
-    elif text == "新聞":
-        stocks = redis.smembers(key)
-        if not stocks:
-            reply = "目前清單中沒有持股，請先新增持股（例如：新增 2330）。"
-        else:
-            # Reuse the notification logic but as a reply
-            reply = "🔍 正在為您查詢最新新聞摘要...\n"
-            full_news_content = ""
-            for stock in stocks:
-                news = fetch_stock_news(stock)
-                if news:
-                    full_news_content += f"\n📈 【{stock}】\n" + "\n\n".join(news) + "\n"
-                else:
-                    full_news_content += f"\n📈 【{stock}】\n暫無最新相關新聞。\n"
-            
-            if len(full_news_content) > 4900:
-                full_news_content = full_news_content[:4897] + "..."
-            reply = full_news_content
-    else:
-        # Ignore other messages or provide help
-        return
+            return
 
-    line_bot_api.reply_message(
-        event.reply_token,
-        TextSendMessage(text=reply)
-    )
+        line_bot_api.reply_message(
+            event.reply_token,
+            TextSendMessage(text=reply)
+        )
+    except Exception as e:
+        logger.error(f"Error in handle_message: {str(e)}", exc_info=True)
 
 @app.get("/api/cron")
 async def daily_news_cron(background_tasks: BackgroundTasks):
