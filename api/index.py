@@ -1,11 +1,12 @@
 import os
 import re
 import requests
-import feedparser
+import time
+import random
 import logging
 from datetime import datetime, timedelta, timezone
-from urllib.parse import quote
-from fastapi import FastAPI, Request, HTTPException, BackgroundTasks
+from bs4 import BeautifulSoup
+from fastapi import FastAPI, Request, HTTPException
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, TextMessage, TextSendMessage
@@ -42,11 +43,10 @@ def get_user_stock_key(user_id: str):
 
 def shorten_url(url: str):
     """
-    Shorten URL using CleanURI API (more modern and reliable).
+    Shorten URL using CleanURI API.
     Falls back to original URL on any error to ensure message delivery.
     """
     try:
-        # CleanURI expects a POST request with the URL
         api_url = "https://cleanuri.com/api/v1/shorten"
         response = requests.post(api_url, data={"url": url}, timeout=5)
         
@@ -63,39 +63,77 @@ def shorten_url(url: str):
     return url  # Fallback to original URL
 
 def fetch_stock_news(stock_id: str):
-    """Fetch news from Google News RSS for a given stock ID, filtered by last 3 days."""
-    url = f"https://news.google.com/rss/search?q={stock_id}+stock&hl=zh-TW&gl=TW&ceid=TW:zh-Hant"
-    feed = feedparser.parse(url)
-    news_items = []
+    """Scrape stock announcements from Goodinfo for a given stock ID, filtered by last 3 days."""
+    tw_tz = timezone(timedelta(hours=8))
+    now_tw = datetime.now(tw_tz)
+    # Query for the last 7 days to ensure we have enough overlap for the 3-day filter
+    start_dt = (now_tw - timedelta(days=7)).strftime("%Y/%m/%d")
+    end_dt = now_tw.strftime("%Y/%m/%d")
     
-    # Time settings
-    now_utc = datetime.now(timezone.utc)
-    three_days_ago = now_utc - timedelta(days=3)
-    tw_tz = timezone(timedelta(hours=8))  # Taiwan Time GMT+8
-
-    for entry in feed.entries:
-        try:
-            # Parse publication date to UTC datetime
-            # published_parsed is a time.struct_time in UTC
-            dt_utc = datetime(*entry.published_parsed[:6], tzinfo=timezone.utc)
+    url = f"https://goodinfo.tw/tw/StockAnnounceList.asp?START_DT={start_dt}&END_DT={end_dt}&STOCK_ID={stock_id}"
+    
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Referer": "https://goodinfo.tw/tw/index.asp"
+    }
+    
+    news_items = []
+    try:
+        response = requests.get(url, headers=headers, timeout=10)
+        response.encoding = "utf-8"
+        
+        if response.status_code != 200:
+            logger.error(f"Failed to fetch Goodinfo: {response.status_code}")
+            return []
             
-            # Filter: only last 3 days
-            if dt_utc < three_days_ago:
+        soup = BeautifulSoup(response.text, "lxml")
+        table = soup.find("table", {"id": "tblAnnounceList"})
+        
+        if not table:
+            logger.warning(f"Announcement table not found for {stock_id}")
+            return []
+            
+        rows = table.find_all("tr")
+        three_days_ago = now_tw - timedelta(days=3)
+        
+        # Skip header row
+        for row in rows[1:]:
+            cols = row.find_all("td")
+            if len(cols) < 4:
                 continue
                 
-            # Convert to Taiwan time for display
-            dt_tw = dt_utc.astimezone(tw_tz)
-            formatted_time = dt_tw.strftime("%Y/%m/%d %H:%M")
+            date_str = cols[0].text.strip() # YYYY/MM/DD
+            time_str = cols[1].text.strip() # HH:MM:SS
+            title = cols[3].text.strip()
+            link_tag = cols[3].find("a")
             
-            short_link = shorten_url(entry.link)
-            news_items.append(f"📌 {entry.title}\n⏰ {formatted_time} (台)\n🔗 {short_link}")
+            if not link_tag:
+                continue
+                
+            link = "https://goodinfo.tw/tw/" + link_tag["href"]
             
-            if len(news_items) >= 3:  # Limit to 3 news per stock
-                break
-        except Exception as e:
-            logger.error(f"Error parsing news entry: {e}")
-            continue
-            
+            # Parse full datetime for filtering
+            try:
+                full_dt_str = f"{date_str} {time_str}"
+                dt_obj = datetime.strptime(full_dt_str, "%Y/%m/%d %H:%M:%S").replace(tzinfo=tw_tz)
+                
+                # Filter: only last 3 days
+                if dt_obj < three_days_ago:
+                    continue
+                    
+                formatted_time = dt_obj.strftime("%Y/%m/%d %H:%M")
+                short_link = shorten_url(link)
+                news_items.append(f"📌 {title}\n⏰ {formatted_time} (台)\n🔗 {short_link}")
+                
+                if len(news_items) >= 3:
+                    break
+            except Exception as e:
+                logger.error(f"Error parsing date {date_str} {time_str}: {e}")
+                continue
+                
+    except Exception as e:
+        logger.error(f"Scraping Goodinfo failed for {stock_id}: {e}")
+        
     return news_items
 
 @app.get("/")
@@ -156,20 +194,8 @@ def handle_message(event):
             if not stocks:
                 reply = "目前清單中沒有持股，請先新增持股（例如：新增 2330）。"
             else:
-                reply = "🔍 正在為您查詢最新新聞摘要...\n"
-                full_news_content = ""
-                for i, stock in enumerate(stocks):
-                    if i > 0:
-                        full_news_content += "\n" + "─" * 15 + "\n"
-                    
-                    news = fetch_stock_news(stock)
-                    if news:
-                        full_news_content += f"\n📈 【{stock}】\n" + "\n\n".join(news) + "\n"
-                    else:
-                        full_news_content += f"\n📈 【{stock}】\n暫無最新相關新聞。\n"
-                
-                if len(full_news_content) > 4900:
-                    full_news_content = full_news_content[:4897] + "..."
+                # Query synchronously as it is a direct reply
+                full_news_content = build_news_message(stocks)
                 reply = full_news_content
         else:
             return
@@ -182,10 +208,10 @@ def handle_message(event):
         logger.error(f"Error in handle_message: {str(e)}", exc_info=True)
 
 @app.get("/api/cron")
-async def daily_news_cron(background_tasks: BackgroundTasks):
+async def daily_news_cron():
     """
     Triggered by Vercel Cron.
-    Fetches news for all stocks of the target user and sends to Line.
+    Synchronously fetches and sends news to ensure Vercel doesn't freeze the task.
     """
     if not LINE_USER_ID:
         return {"status": "error", "message": "LINE_USER_ID not set"}
@@ -196,24 +222,38 @@ async def daily_news_cron(background_tasks: BackgroundTasks):
     if not stocks:
         return {"status": "success", "message": "No stocks to notify"}
 
-    background_tasks.add_task(send_news_notifications, LINE_USER_ID, stocks)
-    return {"status": "success", "message": f"Processing news for {len(stocks)} stocks"}
+    # Process synchronously on Vercel to avoid suspension
+    try:
+        send_news_notifications(LINE_USER_ID, stocks)
+        return {"status": "success", "message": f"Successfully sent news for {len(stocks)} stocks"}
+    except Exception as e:
+        logger.error(f"Cron execution failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
 
-def send_news_notifications(user_id: str, stocks: list):
-    full_message = "📢 早上好！這是您的持股今日新聞摘要：\n"
-    
-    for stock in stocks:
+def build_news_message(stocks: list):
+    """Helper to construct the news message string."""
+    full_message = ""
+    for i, stock in enumerate(stocks):
+        if i > 0:
+            full_message += "\n" + "─" * 15 + "\n"
+            # Anti-429: Add a small delay between requests to Goodinfo
+            time.sleep(random.uniform(1.5, 3.0))
+        
         news = fetch_stock_news(stock)
         if news:
             full_message += f"\n📈 【{stock}】\n" + "\n\n".join(news) + "\n"
         else:
-            full_message += f"\n📈 【{stock}】\n暫無最新相關新聞。\n"
+            full_message += f"\n📈 【{stock}】\n暫無 3 天內最新重大訊息。\n"
     
-    # Line message has a 5000 character limit, but news list might be long.
-    # Split if necessary, but here we assume it fits or simple truncation.
     if len(full_message) > 5000:
         full_message = full_message[:4997] + "..."
+    return full_message
 
+def send_news_notifications(user_id: str, stocks: list):
+    header = "📢 早上好！這是您的持股今日重大訊息摘要：\n"
+    content = build_news_message(stocks)
+    full_message = header + content
+    
     line_bot_api.push_message(
         user_id,
         TextSendMessage(text=full_message)

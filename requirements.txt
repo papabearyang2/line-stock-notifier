@@ -5,3 +5,5 @@ feedparser
 requests
 python-dotenv
 redis
+beautifulsoup4
+lxml
