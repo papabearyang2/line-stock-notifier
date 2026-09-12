@@ -1,0 +1,13 @@
+# Optional human-reviewed overrides for information that is not reliably
+# available as structured open data. Values here take priority over web text.
+#
+# "2330":
+#   profit_sources:
+#     - "晶圓製造（請填入你要顯示的最新營收占比與資料日期）"
+#   upstream:
+#     - "半導體設備"
+#     - "矽晶圓與材料"
+#   downstream:
+#     - "IC 設計"
+#     - "消費電子／伺服器"
+{}

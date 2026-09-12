@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#16324f">
+  <title>臺股交易重心觀測</title>
+  <link rel="stylesheet" href="/static/research/dashboard.css?v=20260902-financial-2y">
+</head>
+<body>
+  <a class="skip-link" href="#mainContent">跳到主要內容</a>
+
+  <header class="site-header">
+    <div class="brand-block">
+      <p class="eyebrow">PRIVATE RESEARCH DESK</p>
+      <a class="brand" href="/research" aria-label="回到臺股交易重心觀測首頁">
+        <span class="brand-mark" aria-hidden="true">台</span>
+        <span>
+          <strong>臺股交易重心觀測</strong>
+          <small>日資料 · 相對強弱 · 來源可追溯</small>
+        </span>
+      </a>
+    </div>
+    <div class="header-actions">
+      <span class="private-badge"><span aria-hidden="true">●</span> 私人模式</span>
+      <form action="/research/logout" method="post">
+        <button class="button button-quiet" type="submit">登出</button>
+      </form>
+    </div>
+  </header>
+
+  <main id="mainContent" class="shell" tabindex="-1">
+    <section id="loginPanel" class="login-panel" hidden aria-labelledby="loginTitle">
+      <div class="login-card">
+        <p class="eyebrow">OWNER ACCESS</p>
+        <h1 id="loginTitle">登入私人研究頁</h1>
+        <p>這個頁面只開放給擁有者。登入後才會載入市場資料。</p>
+        <form action="/research/login" method="post" class="login-form">
+          <label for="password">密碼</label>
+          <input id="password" name="password" type="password" autocomplete="current-password" required>
+          <button class="button button-primary" type="submit">登入</button>
+        </form>
+      </div>
+    </section>
+
+    <div id="appPanel">
+      <section class="status-bar" aria-label="資料狀態">
+        <div class="status-main">
+          <span id="statusDot" class="status-dot is-loading" aria-hidden="true"></span>
+          <div>
+            <strong id="statusText">正在讀取資料</strong>
+            <p id="statusDetail">連線至研究資料庫中…</p>
+          </div>
+        </div>
+        <div class="status-meta">
+          <span>資料日 <strong id="asOf">尚未取得</strong></span>
+          <span>更新時間 <strong id="updatedAt">尚未取得</strong></span>
+        </div>
+      </section>
+
+      <section id="overviewPage" aria-labelledby="overviewTitle">
+        <div class="hero-row">
+          <div>
+            <p class="eyebrow">MARKET MAP</p>
+            <h1 id="overviewTitle">市場熱力圖</h1>
+            <p class="hero-copy">面積代表期間成交值；顏色與箭頭代表相對大盤總報酬的強弱。</p>
+          </div>
+          <div class="method-note">
+            <span aria-hidden="true">i</span>
+            <p id="returnMethod">個股總報酬減去加權報酬指數，以百分點呈現。</p>
+          </div>
+        </div>
+
+        <section class="control-panel" aria-label="熱力圖篩選條件">
+          <div class="control-group">
+            <span class="control-label" id="viewLabel">分類</span>
+            <div class="segmented" role="group" aria-labelledby="viewLabel">
+              <button type="button" data-control="view" data-value="industry" aria-pressed="true">官方產業</button>
+              <button type="button" data-control="view" data-value="theme" aria-pressed="false">研究主題</button>
+            </div>
+          </div>
+          <div class="control-group">
+            <span class="control-label" id="windowLabel">期間</span>
+            <div class="segmented" role="group" aria-labelledby="windowLabel">
+              <button type="button" data-control="window" data-value="1" aria-pressed="false">1 日</button>
+              <button type="button" data-control="window" data-value="5" aria-pressed="false">5 日</button>
+              <button type="button" data-control="window" data-value="20" aria-pressed="true">20 日</button>
+              <button type="button" data-control="window" data-value="60" aria-pressed="false">60 日</button>
+            </div>
+          </div>
+          <div class="control-group">
+            <span class="control-label" id="weightLabel">群組報酬</span>
+            <div class="segmented" role="group" aria-labelledby="weightLabel">
+              <button type="button" data-control="weight" data-value="market_cap" aria-pressed="true">市值加權</button>
+              <button type="button" data-control="weight" data-value="equal" aria-pressed="false">等權</button>
+            </div>
+          </div>
+        </section>
+
+        <nav id="drillNav" class="drill-nav" aria-label="目前檢視層級" hidden>
+          <button id="clearGroup" type="button" class="back-link">
+            <span aria-hidden="true">←</span> 回到全部分類
+          </button>
+          <span aria-hidden="true">/</span>
+          <strong id="groupName"></strong>
+        </nav>
+
+        <aside id="themeWarning" class="notice" hidden>
+          <span class="notice-icon" aria-hidden="true">!</span>
+          <p><strong>研究主題可以重疊。</strong>同一家公司可能同時屬於 AI Server、Switch、CCL 與半導體；各主題面積不可相加解讀為全市場占比。</p>
+        </aside>
+
+        <p id="coverageNote" class="coverage-note" hidden></p>
+
+        <section class="panel heatmap-panel" aria-labelledby="heatmapTitle">
+          <div class="panel-heading">
+            <div>
+              <p class="panel-kicker">TURNOVER × RELATIVE STRENGTH</p>
+              <h2 id="heatmapTitle">官方產業交易重心</h2>
+            </div>
+            <div class="legend" aria-label="相對強弱色彩圖例">
+              <span id="legendLow">↓ 落後</span>
+              <span class="legend-gradient" aria-hidden="true"></span>
+              <span id="legendHigh">↑ 領先</span>
+              <small>≈ 接近大盤</small>
+            </div>
+          </div>
+          <p id="heatmapHint" class="assistive-hint">按 Tab 選擇區塊，再按 Enter 查看明細。</p>
+          <div id="heatmapFrame" class="heatmap-frame" aria-busy="true">
+            <svg id="heatmap" role="group" aria-labelledby="heatmapTitle heatmapHint"></svg>
+            <div id="heatmapEmpty" class="empty-state" hidden>
+              <strong>目前沒有可繪製的成交值</strong>
+              <span>有缺值的項目仍會保留在下方表格。</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel table-panel" aria-labelledby="rankingTitle">
+          <div class="panel-heading table-heading">
+            <div>
+              <p class="panel-kicker">SORTABLE DETAIL</p>
+              <h2 id="rankingTitle">同表比較</h2>
+            </div>
+            <p id="rowCount" class="row-count"></p>
+          </div>
+          <p id="tableDescription" class="table-description">預設依交易重心增幅由高至低排序；點欄名可改變排序。</p>
+          <div class="table-scroll" tabindex="0" aria-label="可左右捲動的市場排行表">
+            <table id="rankingTable">
+              <thead><tr id="rankingHead"></tr></thead>
+              <tbody id="rankingBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <details class="source-panel">
+          <summary>資料來源與計算說明 <span id="sourceCount"></span></summary>
+          <div id="overviewSources" class="source-list"></div>
+        </details>
+      </section>
+
+      <section id="stockPage" hidden aria-labelledby="stockTitle">
+        <button id="backToOverview" type="button" class="back-link stock-back"><span aria-hidden="true">←</span> 回到市場熱力圖</button>
+        <div class="stock-hero">
+          <div>
+            <p id="stockMarket" class="eyebrow">STOCK RESEARCH</p>
+            <h1 id="stockTitle">個股研究</h1>
+            <p id="stockSummary" class="hero-copy"></p>
+          </div>
+          <div id="stockTags" class="tag-groups" aria-label="個股標籤"></div>
+        </div>
+
+        <section class="panel stock-section" aria-labelledby="tradingTitle">
+          <div class="section-title-row">
+            <div><p class="panel-kicker">TRADING FOCUS</p><h2 id="tradingTitle">交易表現</h2></div>
+            <span id="tradingStatus" class="section-status"></span>
+          </div>
+          <div id="tradingMetrics" class="metric-grid"></div>
+          <div id="institutionalBreakdown"></div>
+          <div id="tradingSources"></div>
+        </section>
+
+        <section class="panel stock-section" aria-labelledby="supplyTitle">
+          <div class="section-title-row">
+            <div><p class="panel-kicker">VALUE CHAIN</p><h2 id="supplyTitle">供應鏈位置與同業</h2></div>
+            <span id="supplyStatus" class="section-status"></span>
+          </div>
+          <div id="supplyChain"></div>
+          <div id="supplySources"></div>
+        </section>
+
+        <section class="panel stock-section" aria-labelledby="financialTitle">
+          <div class="section-title-row">
+            <div><p class="panel-kicker">FUNDAMENTALS</p><h2 id="financialTitle">基本財務</h2></div>
+            <span id="financialStatus" class="section-status"></span>
+          </div>
+          <div id="financialCharts" class="financial-chart-grid" aria-label="基本財務統計圖表"></div>
+          <div id="financials"></div>
+          <div id="financialSources"></div>
+        </section>
+
+        <section class="panel stock-section" aria-labelledby="mixTitle">
+          <div class="section-title-row">
+            <div><p class="panel-kicker">REVENUE MIX</p><h2 id="mixTitle">產銷與營收組合</h2></div>
+            <span id="mixStatus" class="section-status"></span>
+          </div>
+          <div id="revenueMix"></div>
+          <div id="mixSources"></div>
+        </section>
+
+        <section class="panel stock-section" aria-labelledby="dividendTitle">
+          <div class="section-title-row">
+            <div><p class="panel-kicker">CORPORATE ACTIONS</p><h2 id="dividendTitle">除權息紀錄</h2></div>
+            <span id="dividendStatus" class="section-status"></span>
+          </div>
+          <div id="dividendEvents"></div>
+          <p class="derived-note">填權息為本系統衍生判斷：收盤價首次回到除權息前一日收盤價以上；盤中觸及另列。遇減資、分割或複雜資本事件時不強行計算。</p>
+          <div id="dividendSources"></div>
+        </section>
+
+        <section class="panel stock-section" aria-labelledby="newsTitle">
+          <div class="section-title-row news-title-row">
+            <div><p class="panel-kicker">RECENT EVENTS</p><h2 id="newsTitle">近期新聞與公告</h2></div>
+            <div class="segmented compact" role="group" aria-label="新聞期間">
+              <button type="button" data-control="news" data-value="7" aria-pressed="false">7 日</button>
+              <button type="button" data-control="news" data-value="30" aria-pressed="true">30 日</button>
+              <button type="button" data-control="news" data-value="90" aria-pressed="false">90 日</button>
+            </div>
+          </div>
+          <div id="newsItems"></div>
+          <div id="newsSources"></div>
+        </section>
+
+        <details class="source-panel">
+          <summary>個股頁整體資料來源</summary>
+          <div id="stockSources" class="source-list"></div>
+        </details>
+      </section>
+
+      <section id="fatalError" class="fatal-error" hidden role="alert">
+        <strong>資料暫時無法顯示</strong>
+        <p id="fatalErrorText">請稍後再試。</p>
+        <button id="retryButton" class="button button-primary" type="button">重新讀取</button>
+      </section>
+    </div>
+  </main>
+
+  <div id="liveRegion" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+  <script src="/static/research/dashboard.js?v=20260902-financial-2y" defer></script>
+</body>
+</html>

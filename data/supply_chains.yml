@@ -1,0 +1,14 @@
+# Industry-level fallback. Add stock-specific relationships in
+# company_profiles.yml when you need investment-research-grade precision.
+"半導體業":
+  upstream: ["IC 設計", "半導體設備", "矽晶圓與化學材料"]
+  downstream: ["封裝測試", "電子零組件", "伺服器與消費電子"]
+"電腦及週邊設備業":
+  upstream: ["半導體", "PCB", "被動元件", "機殼與散熱"]
+  downstream: ["品牌通路", "雲端資料中心", "企業與消費市場"]
+"電子零組件業":
+  upstream: ["金屬與化工材料", "半導體", "生產設備"]
+  downstream: ["電腦", "通訊", "汽車電子", "消費電子"]
+"金融保險業":
+  upstream: ["存款與資本市場資金", "金融科技與資訊服務"]
+  downstream: ["企業金融", "消費金融", "財富管理", "保險"]

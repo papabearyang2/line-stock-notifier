@@ -1,0 +1,653 @@
+themes:
+  ai_server:
+    key: ai_server
+    name: AI Server
+    description: AI 訓練、推論與雲端資料中心所使用的伺服器、機櫃系統及已證實供應其所需的關鍵材料。
+  switch:
+    key: switch
+    name: Switch
+    description: 企業、電信與資料中心網路交換器，以及已證實用於高階交換器的關鍵材料。
+  ccl:
+    key: ccl
+    name: CCL
+    description: 印刷電路板所使用的銅箔基板、膠片與相關壓合材料。
+  asic:
+    key: asic
+    name: ASIC
+    description: 客製化 ASIC／SoC 的設計、矽智財整合、先進封裝與量產服務。
+  optical_communication:
+    key: optical_communication
+    name: 光通訊
+    description: 光通訊磊晶、主被動光元件、光模組、次模組與光纖連接產品。
+
+stocks:
+  "2345":
+    name: 智邦
+    market: TWSE
+    themes:
+      - key: switch
+        relation_state: actual_business
+        effective_from: "2025-01-01"
+        source: &accton_switch_source
+          name: Accton Technology — Letter to Shareholders
+          url: "https://www.accton.com/shareholder/"
+          published_at: null
+          data_period: "2025"
+          last_verified: "2026-09-01"
+          type: company_shareholder_report
+          locator: "I. Business Performance in Year 2025；revenue contribution by product line"
+        evidence: 公司揭露 2025 年 network switches 占總營收 35%，並說明 51.2T switch 與 800G optical interface 已快速採用並持續成長。
+    tags:
+      - dimension: product
+        label: Network Switch
+        relation_state: actual_business
+        source: *accton_switch_source
+        evidence: 公司揭露交換器為實際營收產品線。
+      - dimension: technology
+        label: 51.2T／800G 網路交換
+        relation_state: actual_business
+        source: *accton_switch_source
+        evidence: 公司報告記載 51.2T switch 與 800G optical interface 已獲採用。
+      - dimension: application
+        label: AI／資料中心網路
+        relation_state: actual_business
+        source: *accton_switch_source
+        evidence: 公司將相關交換器定位於 AI、超級運算與網路服務基礎設施。
+      - dimension: supply_chain_role
+        label: 網路設備 ODM／JDM
+        relation_state: actual_business
+        source: *accton_switch_source
+        evidence: 公司以網路交換器及網路應用設備的設計製造為主要業務。
+
+  "2356":
+    name: 英業達
+    market: TWSE
+    themes:
+      - key: ai_server
+        relation_state: actual_business
+        effective_from: null
+        source: &inventec_products_source
+          name: Inventec — Products & Applications
+          url: "https://www.inventec.com/en/products.htm"
+          published_at: null
+          data_period: current
+          last_verified: "2026-09-01"
+          type: company_product_page
+          locator: "Products；Applications — Cloud data center"
+        evidence: 公司官網現行產品分類明列 AI Server，並稱其為雲端資料中心提供 AI servers。
+      - key: switch
+        relation_state: actual_business
+        effective_from: null
+        source: *inventec_products_source
+        evidence: 公司官網現行產品分類明列 Network Switch，並稱其為雲端資料中心提供 network switches。
+    tags:
+      - dimension: product
+        label: AI Server
+        relation_state: actual_business
+        source: *inventec_products_source
+        evidence: 官網將 AI Server 列為現有產品類別。
+      - dimension: product
+        label: Network Switch
+        relation_state: actual_business
+        source: *inventec_products_source
+        evidence: 官網將 Network Switch 列為現有產品類別。
+      - dimension: application
+        label: Cloud Data Center
+        relation_state: actual_business
+        source: *inventec_products_source
+        evidence: 官網說明 AI servers 與 network switches 用於雲端資料中心。
+      - dimension: supply_chain_role
+        label: 伺服器與交換器系統設計製造
+        relation_state: actual_business
+        source: *inventec_products_source
+        evidence: 公司具備主機板、機櫃、伺服器與交換器的設計及生產能力。
+
+  "2382":
+    name: 廣達
+    market: TWSE
+    themes:
+      - key: ai_server
+        relation_state: actual_business
+        effective_from: "2024-01-01"
+        source: &quanta_ai_source
+          name: Quanta Computer — 2024 Sustainability Report
+          url: "https://www.quantatw.com/Quanta/english/esg/ESG2024/ch01.html"
+          published_at: null
+          data_period: "2024"
+          last_verified: "2026-09-01"
+          type: company_sustainability_report
+          locator: "§1.1.1 Company Profile；Market and Production & Sales Overview"
+        evidence: 公司自述為 AI server 的開發、設計及製造商，並說明 2024 年 AI 資料中心擴建帶動伺服器業務顯著成長。
+    tags:
+      - dimension: product
+        label: AI Server
+        relation_state: actual_business
+        source: *quanta_ai_source
+        evidence: 公司簡介把 AI servers 列為主要設計與製造產品。
+      - dimension: technology
+        label: 高效能運算系統
+        relation_state: actual_business
+        source: *quanta_ai_source
+        evidence: 公司說明其研發與製造聚焦高效能運算和智慧科技產品。
+      - dimension: application
+        label: 生成式 AI 基礎設施
+        relation_state: actual_business
+        source: *quanta_ai_source
+        evidence: 公司說明已投入生成式 AI 基礎設施建置。
+      - dimension: supply_chain_role
+        label: AI 伺服器 ODM／系統製造
+        relation_state: actual_business
+        source: *quanta_ai_source
+        evidence: 公司具備 AI 伺服器開發、設計與製造能力。
+
+  "2383":
+    name: 台光電
+    market: TWSE
+    themes:
+      - key: ccl
+        relation_state: actual_business
+        effective_from: null
+        source: &emc_ccl_source
+          name: Elite Material — Company Profile
+          url: "https://www.emctw.com/en-global/about_milestone/index"
+          published_at: null
+          data_period: current
+          last_verified: "2026-09-01"
+          type: company_profile
+          locator: "Profile"
+        evidence: 公司明載自 1992 年起為 CCL 與 prepreg 製造商，並持續提供多種低損耗基板材料。
+    tags:
+      - dimension: product
+        label: CCL／Prepreg
+        relation_state: actual_business
+        source: *emc_ccl_source
+        evidence: 公司簡介明列 CCL 與 prepreg 為製造產品。
+      - dimension: technology
+        label: Mid Loss 至 Extreme Low Loss 基板材料
+        relation_state: actual_business
+        source: *emc_ccl_source
+        evidence: 公司列出 Mid、Low、Very Low、Ultra Low 與 Extreme Low Loss 材料系列。
+      - dimension: supply_chain_role
+        label: PCB 基材製造
+        relation_state: actual_business
+        source: *emc_ccl_source
+        evidence: 公司產品用於印刷電路板製造。
+
+  "3035":
+    name: 智原
+    market: TWSE
+    themes:
+      - key: asic
+        relation_state: actual_business
+        effective_from: null
+        source: &faraday_asic_source
+          name: Faraday Technology — Investor FAQ
+          url: "https://www.faraday-tech.com/en/content/IR/InvestorFAQ"
+          published_at: null
+          data_period: current
+          last_verified: "2026-09-01"
+          type: company_ir_faq
+          locator: "What service does Faraday provide?"
+        evidence: 公司明列 ASIC/SoC Design Service、ASIC/SoC Production Turnkey Services 與 Silicon Intellectual Properties。
+    tags:
+      - dimension: product
+        label: ASIC／SoC Design Service
+        relation_state: actual_business
+        source: *faraday_asic_source
+        evidence: 公司投資人 FAQ 明列 ASIC／SoC 設計服務。
+      - dimension: product
+        label: Silicon IP
+        relation_state: actual_business
+        source: *faraday_asic_source
+        evidence: 公司投資人 FAQ 明列 Silicon Intellectual Properties。
+      - dimension: supply_chain_role
+        label: ASIC 設計、IP 與量產 turnkey 服務
+        relation_state: actual_business
+        source: *faraday_asic_source
+        evidence: 公司提供從設計、IP 到量產的 ASIC／SoC 服務。
+
+  "3081":
+    name: 聯亞
+    market: TPEx
+    themes:
+      - key: optical_communication
+        relation_state: actual_business
+        effective_from: null
+        source: &landmark_optical_source
+          name: LandMark Optoelectronics — Company Website
+          url: "https://www.lmoc.com.tw/index.php?lang=en"
+          published_at: null
+          data_period: current
+          last_verified: "2026-09-01"
+          type: company_profile
+          locator: "About LandMark"
+        evidence: 公司定位為光通訊、工業與特殊用途的 GaAs、InP 磊晶片供應商。
+    tags:
+      - dimension: product
+        label: GaAs／InP Epi-wafer
+        relation_state: actual_business
+        source: *landmark_optical_source
+        evidence: 公司明列 GaAs 與 InP 磊晶片為供應產品。
+      - dimension: technology
+        label: III-V 光通訊磊晶
+        relation_state: actual_business
+        source: *landmark_optical_source
+        evidence: 公司以化合物半導體磊晶技術供應光通訊應用。
+      - dimension: application
+        label: 光通訊
+        relation_state: actual_business
+        source: *landmark_optical_source
+        evidence: 公司把 optical communication 列為主要應用。
+      - dimension: supply_chain_role
+        label: 光通訊上游磊晶材料
+        relation_state: actual_business
+        source: *landmark_optical_source
+        evidence: 公司供應後續雷射與光偵測元件所需的磊晶片。
+
+  "3363":
+    name: 上詮
+    market: TPEx
+    themes:
+      - key: optical_communication
+        relation_state: actual_business
+        effective_from: null
+        source: &foci_optical_source
+          name: FOCI — Product Catalog
+          url: "https://www.foci.com.tw/en-gb/product-category/0"
+          published_at: null
+          data_period: current
+          last_verified: "2026-09-01"
+          type: company_product_page
+          locator: "All products"
+        evidence: 公司現行產品目錄列出 AOC、SFP／QSFP transceiver 等主動光產品，官網亦區分主動與被動光產品。
+    tags:
+      - dimension: product
+        label: 主動／被動光通訊產品
+        relation_state: actual_business
+        source: *foci_optical_source
+        evidence: 官網現行產品包含主動光纜、收發模組及被動光元件。
+      - dimension: technology
+        label: Silicon Photonics／CPO 元件整合
+        relation_state: actual_business
+        source: *foci_optical_source
+        evidence: 公司官網列有矽光子與共同封裝光學相關技術應用。
+      - dimension: supply_chain_role
+        label: 光纖元件與光模組整合
+        relation_state: actual_business
+        source: *foci_optical_source
+        evidence: 現有產品橫跨光纖被動元件、AOC 與 optical transceiver。
+
+  "3380":
+    name: 明泰
+    market: TWSE
+    themes:
+      - key: switch
+        relation_state: actual_business
+        effective_from: "2025-09-22"
+        source: &alpha_switch_source
+          name: Alpha Networks — 1.6T Liquid-Cooled Switch Release
+          url: "https://www.alphanetworks.com/en/news/1880b2df0413ed6e"
+          published_at: "2025-09-22"
+          data_period: "2025"
+          last_verified: "2026-09-01"
+          type: company_press_release
+          locator: "Product Features"
+        evidence: 公司正式發布採 Broadcom Tomahawk 6、交換容量 102.4 Tbps 的 1.6T 液冷交換器。
+    tags:
+      - dimension: product
+        label: Data Center Switch
+        relation_state: actual_business
+        source: *alpha_switch_source
+        evidence: 公司已推出供資料中心使用的高速交換器。
+      - dimension: technology
+        label: 1.6T／102.4 Tbps 液冷交換器
+        relation_state: actual_business
+        source: *alpha_switch_source
+        evidence: 新產品採 1.6T 介面、102.4 Tbps switching capacity 與液冷設計。
+      - dimension: application
+        label: AI／Cloud Data Center
+        relation_state: actual_business
+        source: *alpha_switch_source
+        evidence: 公司明列產品設計用途包含 AI、雲端資料中心與 HPC。
+      - dimension: supply_chain_role
+        label: 網通設備 DMS
+        relation_state: actual_business
+        source: *alpha_switch_source
+        evidence: 公司自述為網路通訊產品設計、研發與製造供應商。
+
+  "3443":
+    name: 創意
+    market: TWSE
+    themes:
+      - key: asic
+        relation_state: actual_business
+        effective_from: null
+        source: &guc_asic_source
+          name: Global Unichip — About GUC
+          url: "https://www.guc-asic.com/en/about/us"
+          published_at: null
+          data_period: current
+          last_verified: "2026-09-01"
+          type: company_profile
+          locator: "Company；Market & Advantages"
+        evidence: 公司定位為 advanced ASIC services 業者，服務涵蓋 spec-in、SoC integration、physical implementation、先進封裝與 turnkey manufacturing。
+    tags:
+      - dimension: product
+        label: Advanced ASIC Service
+        relation_state: actual_business
+        source: *guc_asic_source
+        evidence: 公司明確提供完整 ASIC 設計與量產服務。
+      - dimension: technology
+        label: HBM／Die-to-Die／Advanced Packaging
+        relation_state: actual_business
+        source: *guc_asic_source
+        evidence: 公司將 HBM、die-to-die IP 與先進封裝列為現有服務能力。
+      - dimension: application
+        label: AI／HPC／5G／Networking
+        relation_state: actual_business
+        source: *guc_asic_source
+        evidence: 公司明列其 ASIC 服務市場包含 AI、HPC、5G 與 networking。
+      - dimension: supply_chain_role
+        label: ASIC 設計與 Turnkey 服務
+        relation_state: actual_business
+        source: *guc_asic_source
+        evidence: 公司服務從 SoC 整合、實體設計延伸至封裝與量產。
+
+  "3661":
+    name: 世芯-KY
+    market: TWSE
+    themes:
+      - key: asic
+        relation_state: actual_business
+        effective_from: null
+        source: &alchip_asic_source
+          name: Alchip Technologies — Company
+          url: "https://www.alchip.com/public/index.php/en/About_Alchip/company"
+          published_at: null
+          data_period: current
+          last_verified: "2026-09-01"
+          type: company_profile
+          locator: "Our Mission；Services"
+        evidence: 公司明載提供複雜、高量 ASIC／SoC 的設計與製造服務，以及 2.5D／3DIC、CoWoS／chiplet 設計與製造管理。
+    tags:
+      - dimension: product
+        label: ASIC／SoC Turnkey Solution
+        relation_state: actual_business
+        source: *alchip_asic_source
+        evidence: 公司提供 ASIC 設計、封裝、測試與生產服務。
+      - dimension: technology
+        label: 2.5D／3DIC／CoWoS／Chiplet
+        relation_state: actual_business
+        source: *alchip_asic_source
+        evidence: 公司把先進封裝與 chiplet 設計列為既有服務。
+      - dimension: application
+        label: AI／HPC
+        relation_state: actual_business
+        source: *alchip_asic_source
+        evidence: 公司明列 AI 與 HPC 為聚焦市場。
+      - dimension: supply_chain_role
+        label: ASIC 設計與量產服務
+        relation_state: actual_business
+        source: *alchip_asic_source
+        evidence: 公司定位為 silicon design and manufacturing service provider。
+
+  "4979":
+    name: 華星光
+    market: TPEx
+    themes:
+      - key: optical_communication
+        relation_state: actual_business
+        effective_from: null
+        source: &luxnet_optical_source
+          name: LuxNet — Company Overview
+          url: "https://www.luxnetcorp.com.tw/en-US/about-111-page179"
+          published_at: null
+          data_period: current
+          last_verified: "2026-09-01"
+          type: company_profile
+          locator: "LuxNet Overview；LuxNet History"
+        evidence: 公司設計、開發及製造光半導體與封裝光元件，應用於高速網路、儲存與有線電視通訊。
+    tags:
+      - dimension: product
+        label: Optical Chip／TO-CAN／OSA
+        relation_state: actual_business
+        source: *luxnet_optical_source
+        evidence: 公司產品涵蓋光晶片、TO-CAN 與 optical sub-assembly。
+      - dimension: technology
+        label: III-V 光半導體與封裝
+        relation_state: actual_business
+        source: *luxnet_optical_source
+        evidence: 公司具備 III-V 化合物半導體設計、製程與封裝能力。
+      - dimension: application
+        label: 高速光通訊
+        relation_state: actual_business
+        source: *luxnet_optical_source
+        evidence: 公司產品實際用於 networking、storage 與 cable TV data communications。
+      - dimension: supply_chain_role
+        label: 主動光元件與封裝
+        relation_state: actual_business
+        source: *luxnet_optical_source
+        evidence: 公司供應光半導體元件及其封裝次組件。
+
+  "6213":
+    name: 聯茂
+    market: TWSE
+    themes:
+      - key: ccl
+        relation_state: actual_business
+        effective_from: "1997-04-10"
+        source: &iteq_ccl_source
+          name: ITEQ — Company Profile
+          url: "https://www.iteqcorp.com/about-iteq/company-profile/?lang=en"
+          published_at: null
+          data_period: current
+          last_verified: "2026-09-01"
+          type: company_profile
+          locator: "Company Overview；Main Products"
+        evidence: 公司自 1997 年成立即為高效能 CCL 材料製造商，主要產品明列 CCL、Prepreg 與 Masslam Service。
+    tags:
+      - dimension: product
+        label: CCL／Prepreg／Masslam
+        relation_state: actual_business
+        source: *iteq_ccl_source
+        evidence: 公司簡介明列 CCL、Prepreg 與 Masslam 為主要產品服務。
+      - dimension: technology
+        label: High-performance／Low-loss Laminate
+        relation_state: actual_business
+        source: *iteq_ccl_source
+        evidence: 公司定位為高效能銅箔基板材料製造商。
+      - dimension: supply_chain_role
+        label: PCB 基材製造
+        relation_state: actual_business
+        source: *iteq_ccl_source
+        evidence: 公司材料用於印刷電路板製造。
+
+  "6274":
+    name: 台燿
+    market: TPEx
+    themes:
+      - key: ai_server
+        relation_state: actual_business
+        effective_from: "2024-01-01"
+        source: &tuc_esg_source
+          name: Taiwan Union Technology — 2024 Sustainability Report
+          url: "https://www.tuc.com.tw/_run.php?file=b904e028a0eb99742440b4cc27740deca50de831.pdf&name=%E5%8F%B0%E7%87%BF2024+ESG%E8%8B%B1%E6%96%87%E7%89%88.pdf&work=down"
+          published_at: null
+          data_period: "2024"
+          last_verified: "2026-09-01"
+          type: company_sustainability_report
+          locator: "p.40, §3.3 Operational Performance"
+        evidence: 公司稱 2024 年持續拓展 AI Server 市場，且 AI／HPC 需求帶動高階材料銷售成長；未揭露可拆分的 AI Server 營收占比。
+      - key: switch
+        relation_state: actual_business
+        effective_from: "2024-01-01"
+        source: *tuc_esg_source
+        evidence: 公司稱高階交換器需求帶動高階產品銷售成長，並持續提高 400G／800G 高階網通產品市占；未揭露可拆分的 Switch 營收占比。
+      - key: ccl
+        relation_state: actual_business
+        effective_from: null
+        source: &tuc_product_source
+          name: Taiwan Union Technology — Products
+          url: "https://www.tuc.com.tw/products-detail.php?id=15&lang=tw"
+          published_at: null
+          data_period: current
+          last_verified: "2026-09-01"
+          type: company_product_page
+          locator: "Our Products；Standard Availability；Applications"
+        evidence: 公司現行產品頁明列 CCL 與 Prepreg 供應型態及其伺服器、企業路由器與交換器應用。
+    tags:
+      - dimension: product
+        label: CCL／Prepreg
+        relation_state: actual_business
+        source: *tuc_product_source
+        evidence: 公司現行產品頁明列 CCL 與 Prepreg 供應型態。
+      - dimension: technology
+        label: High-speed／Low-loss Laminate
+        relation_state: actual_business
+        source: *tuc_product_source
+        evidence: 公司產品線涵蓋高頻、高速與低損耗基板材料。
+      - dimension: application
+        label: AI Server
+        relation_state: actual_business
+        source: *tuc_esg_source
+        evidence: 公司稱 2024 年持續拓展 AI Server 市場，且相關需求帶動高階材料銷售。
+      - dimension: application
+        label: Switch
+        relation_state: actual_business
+        source: *tuc_esg_source
+        evidence: 公司稱高階交換器需求帶動銷售，並持續拓展 400G／800G 高階網通產品。
+      - dimension: application
+        label: IC Substrate
+        relation_state: application_or_roadmap
+        source: *tuc_esg_source
+        evidence: 公司文字僅表示正在推動 IC substrate 的客戶認證與市場開發，尚不足以標為實際業務。
+      - dimension: supply_chain_role
+        label: PCB 基材／CCL
+        relation_state: actual_business
+        source: &tuc_tpex_source
+          name: Taipei Exchange — Industry Value Chain Information Platform
+          url: "https://ic.tpex.org.tw/company_chain.php?stk_code=6274"
+          published_at: null
+          data_period: current
+          last_verified: "2026-09-01"
+          type: exchange_industry_value_chain
+          locator: "個體公司所屬產業鏈：印刷電路板 > 銅箔基板"
+        evidence: 櫃買中心把台燿定位於印刷電路板產業鏈的銅箔基板環節；不標記為半導體公司。
+    supply_chain:
+      status: verified
+      position:
+        label: PCB 基材／CCL
+        source: *tuc_tpex_source
+        evidence: 櫃買中心產業價值鏈將台燿列於「印刷電路板 > 銅箔基板」。
+      upstream:
+        relationship_type: industry_context
+        categories:
+          - 樹脂系統
+          - 銅箔
+          - 玻纖布
+        source: *tuc_product_source
+        note: 以上是 CCL 的原料類別與產品結構背景，不代表已核實的台燿實際供應商名單。
+      peers:
+        relationship_type: same_product_peer
+        companies:
+          - code: "2383"
+            name: 台光電
+            basis: 同為 CCL／Prepreg 製造商
+            source: *emc_ccl_source
+          - code: "6213"
+            name: 聯茂
+            basis: 同為 CCL／Prepreg 製造商
+            source: *iteq_ccl_source
+        note: 同層 peers 依相同產品與供應鏈位置判定，不代表公司彼此承認競爭關係或存在交易關係。
+      downstream:
+        relationship_type: industry_context
+        categories:
+          - PCB 製造
+          - 伺服器
+          - 交換器
+        sources:
+          - *tuc_tpex_source
+          - *tuc_product_source
+          - *tuc_esg_source
+        note: PCB、伺服器與交換器是下游產業／應用脈絡，不是經證據確認的實際客戶或直接供應關係。
+      note: 所有上下游資訊均為產業位置與應用背景；除非另有公司或客戶第一方證據，不得顯示為實際供應商、客戶或訂單關係。
+    product_mix:
+      status: unavailable
+      source: *tuc_esg_source
+      note: 公司證據可確認 CCL、AI Server 與高階 Switch 的業務／應用關係，但沒有可可靠拆分的 AI Server 或 Switch 營收占比；不得由需求敘述、技術別營收或市場報導推算比例。
+
+  "6442":
+    name: 光聖
+    market: TPEx
+    themes:
+      - key: optical_communication
+        relation_state: actual_business
+        effective_from: "2024-01-01"
+        source: &ezconn_optical_source
+          name: EZconn — 2024 Annual Report
+          url: "https://gmes.ezconn.com/doc/stocks/en/2024_6442_20250528FE4_year_en.pdf"
+          published_at: "2025-05-28"
+          data_period: "2024"
+          last_verified: "2026-09-01"
+          type: company_annual_report
+          locator: "p.104, Optical communication products — Main Product / Application Range"
+        evidence: 年報把 transceiver module、fiber-optic transceiver sub-assembly、patch cord 與 optical connector 列為主要光通訊產品。
+    tags:
+      - dimension: product
+        label: Optical Transceiver Module
+        relation_state: actual_business
+        source: *ezconn_optical_source
+        evidence: 公司年報列為主要光通訊產品。
+      - dimension: product
+        label: Optical Sub-assembly／Connector／Patch Cord
+        relation_state: actual_business
+        source: *ezconn_optical_source
+        evidence: 公司年報列出光收發次模組、光纖連接器與跳接線。
+      - dimension: application
+        label: 網路與資料傳輸
+        relation_state: actual_business
+        source: *ezconn_optical_source
+        evidence: 公司說明產品用於網路通訊、資料傳輸及有線電視設備。
+      - dimension: supply_chain_role
+        label: 光模組、次模組與連接元件
+        relation_state: actual_business
+        source: *ezconn_optical_source
+        evidence: 產品橫跨光收發模組、次模組與連接元件。
+
+  "6669":
+    name: 緯穎
+    market: TWSE
+    themes:
+      - key: ai_server
+        relation_state: actual_business
+        effective_from: "2025-05-19"
+        source: &wiwynn_ai_source
+          name: Wiwynn — Next-Generation AI Infrastructure at COMPUTEX 2025
+          url: "https://www.wiwynn.com/news/wiwynn-showcases-next-generation-ai-infrastructure-at-computex-2025"
+          published_at: "2025-05-19"
+          data_period: "2025"
+          last_verified: "2026-09-01"
+          type: company_press_release
+          locator: "Next-Generation AI Systems"
+        evidence: 公司展示並提供 GB300 NVL72、AMD MI350 等次世代 AI server 系統與相關液冷方案。
+    tags:
+      - dimension: product
+        label: AI Server／AI Server Rack
+        relation_state: actual_business
+        source: *wiwynn_ai_source
+        evidence: 公司新聞稿列出多款現行 AI server 與 rack-level AI system。
+      - dimension: technology
+        label: GPU 加速運算與液冷
+        relation_state: actual_business
+        source: *wiwynn_ai_source
+        evidence: 公司產品整合 GPU 加速平台與 direct liquid cooling。
+      - dimension: application
+        label: AI 訓練／推論與資料中心
+        relation_state: actual_business
+        source: *wiwynn_ai_source
+        evidence: 公司產品面向現代資料中心的 AI 計算需求。
+      - dimension: supply_chain_role
+        label: AI 伺服器與機櫃系統供應
+        relation_state: actual_business
+        source: *wiwynn_ai_source
+        evidence: 公司提供伺服器、機櫃級 AI 系統與冷卻整合方案。
