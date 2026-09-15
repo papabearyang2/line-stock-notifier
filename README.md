@@ -76,7 +76,7 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000
 - 三大法人：TWSE `T86`、TPEx `dailyTrade`，保留買賣超股數與來源網址。
 - 市場基準：TWSE TAIEX 價格指數與發行量加權股價報酬指數。
 - 本益比、價格、財務報表：FinMind。
-- 新聞：Google News RSS。
+- 新聞：Google News RSS，依序查找工商時報、Goodinfo，兩者皆無結果才使用一般新聞搜尋；不直接爬取兩站文章頁。
 - 研究標籤、上下游與產品組合人工覆核資料：`data/research_taxonomy.yml`。
 - 舊版 LINE 查詢使用的上下游／公司資料：`data/supply_chains.yml`、`data/company_profiles.yml`。
 - Goodinfo：預設關閉；只在你明確執行本機補庫腳本時啟動 raw Chrome，透過 CDP 由 Playwright 控制並限速抓取，結果保存到
