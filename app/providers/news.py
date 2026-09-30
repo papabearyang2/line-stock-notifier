@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from email.utils import parsedate_to_datetime
+import re
 from urllib.parse import quote_plus
 
 import feedparser
@@ -39,6 +40,7 @@ class GoogleNewsProvider:
                     client,
                     query=query,
                     stock_code=stock_code,
+                    company_name=name,
                     days=days,
                     limit=limit,
                     source_name=source_name,
@@ -53,6 +55,7 @@ class GoogleNewsProvider:
         *,
         query: str,
         stock_code: str,
+        company_name: str,
         days: int,
         limit: int,
         source_name: str | None,
@@ -73,7 +76,9 @@ class GoogleNewsProvider:
                 continue
             title = str(entry.get("title", "")).strip()
             link = str(entry.get("link", "")).strip()
-            if not title or not link or link in seen:
+            if not title or not link or link in seen or not self._is_stock_news(
+                title, stock_code, company_name
+            ):
                 continue
             seen.add(link)
             source = ""
@@ -86,6 +91,22 @@ class GoogleNewsProvider:
         oldest = datetime.min.replace(tzinfo=timezone.utc)
         results.sort(key=lambda article: article.published_at or oldest, reverse=True)
         return results[:limit]
+
+    @staticmethod
+    def _is_stock_news(title: str, stock_code: str, company_name: str) -> bool:
+        if "搜尋結果" in title or "search results" in title.casefold():
+            return False
+        if re.search(rf"(?<!\d){re.escape(stock_code)}(?!\d)", title):
+            return True
+        name = company_name.strip().removesuffix("股份有限公司").removesuffix("有限公司")
+        if len(name) < 2:
+            return False
+        if name in title:
+            return True
+        for suffix in ("科技", "開發", "電子", "電機", "工業", "實業", "國際", "材料"):
+            if name.endswith(suffix) and len(name) - len(suffix) >= 2:
+                return name[: -len(suffix)] in title
+        return False
 
     @staticmethod
     def _parse_date(value: str | None) -> datetime | None:

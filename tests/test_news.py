@@ -13,9 +13,9 @@ async def test_news_is_sorted_newest_first(monkeypatch):
     newer = format_datetime(datetime(2099, 1, 2, tzinfo=timezone.utc), usegmt=True)
     rss = f"""
     <rss><channel>
-      <item><title>較舊</title><link>https://example.com/old</link><pubDate>{older}</pubDate></item>
-      <item><title>最新</title><link>https://example.com/new</link><pubDate>{newer}</pubDate></item>
-      <item><title>無日期</title><link>https://example.com/unknown</link></item>
+      <item><title>2330 較舊</title><link>https://example.com/old</link><pubDate>{older}</pubDate></item>
+      <item><title>2330 最新</title><link>https://example.com/new</link><pubDate>{newer}</pubDate></item>
+      <item><title>2330 無日期</title><link>https://example.com/unknown</link></item>
     </channel></rss>
     """
 
@@ -34,7 +34,7 @@ async def test_news_is_sorted_newest_first(monkeypatch):
 
     articles = await GoogleNewsProvider().get_stock_news("2330", limit=3)
 
-    assert [article.title for article in articles] == ["最新", "較舊", "無日期"]
+    assert [article.title for article in articles] == ["2330 最新", "2330 較舊", "2330 無日期"]
     assert [article.source for article in articles] == ["工商時報"] * 3
     assert len(requested_urls) == 1
     assert "site:ctee.com.tw" in requested_urls[0]
@@ -70,3 +70,63 @@ async def test_news_falls_back_to_goodinfo_when_ctee_has_no_results(monkeypatch)
     assert len(requested_urls) == 2
     assert "site:ctee.com.tw" in requested_urls[0]
     assert "site:goodinfo.tw" in requested_urls[1]
+
+
+async def test_news_skips_search_pages_and_unrelated_stocks_before_fallback(monkeypatch):
+    published = format_datetime(datetime(2099, 1, 2, tzinfo=timezone.utc), usegmt=True)
+    ctee_rss = f"""
+    <rss><channel>
+      <item><title>「台燿」的搜尋結果 - 工商時報</title><link>https://example.com/search-taiyo</link><pubDate>{published}</pubDate></item>
+      <item><title>「德宏」的搜尋結果 - 工商時報</title><link>https://example.com/search-dehong</link><pubDate>{published}</pubDate></item>
+      <item><title>彩晶擴產</title><link>https://example.com/chimei</link><pubDate>{published}</pubDate></item>
+    </channel></rss>
+    """
+    goodinfo_rss = f"""
+    <rss><channel><item>
+      <title>台燿最新公告</title><link>https://example.com/taiyo</link><pubDate>{published}</pubDate>
+    </item></channel></rss>
+    """
+    requested_urls = []
+
+    async def company(_):
+        return type("Company", (), {"name": "台燿科技股份有限公司"})()
+
+    async def get(_client, url, **kwargs):
+        decoded_url = unquote_plus(str(url))
+        requested_urls.append(decoded_url)
+        content = ctee_rss if "site:ctee.com.tw" in decoded_url else goodinfo_rss
+        return httpx.Response(200, content=content, request=httpx.Request("GET", url))
+
+    monkeypatch.setattr(market_catalog, "get", company)
+    monkeypatch.setattr(httpx.AsyncClient, "get", get)
+
+    articles = await GoogleNewsProvider().get_stock_news("6274")
+
+    assert [article.title for article in articles] == ["台燿最新公告"]
+    assert [article.source for article in articles] == ["Goodinfo"]
+    assert len(requested_urls) == 2
+
+
+async def test_news_keeps_relevant_ctee_article(monkeypatch):
+    published = format_datetime(datetime(2099, 1, 2, tzinfo=timezone.utc), usegmt=True)
+    rss = f"""
+    <rss><channel><item>
+      <title>台燿擴充產能</title><link>https://example.com/taiyo</link><pubDate>{published}</pubDate>
+    </item></channel></rss>
+    """
+    requested_urls = []
+
+    async def company(_):
+        return type("Company", (), {"name": "台燿科技股份有限公司"})()
+
+    async def get(_client, url, **kwargs):
+        requested_urls.append(str(url))
+        return httpx.Response(200, content=rss, request=httpx.Request("GET", url))
+
+    monkeypatch.setattr(market_catalog, "get", company)
+    monkeypatch.setattr(httpx.AsyncClient, "get", get)
+
+    articles = await GoogleNewsProvider().get_stock_news("6274")
+
+    assert [article.title for article in articles] == ["台燿擴充產能"]
+    assert len(requested_urls) == 1
